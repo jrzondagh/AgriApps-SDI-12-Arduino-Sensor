@@ -1,13 +1,5 @@
 #include <SDI12.h>
 
-#define _BUFFER_SIZE 64    
-#define DISABLED 0
-#define ENABLED 1
-#define HOLDING 2
-#define TRANSMITTING 3
-#define LISTENING 4
-#define SPACING 830 
-
 // ------ SETTINGS ------
 
 #define DATAPIN 4 
@@ -69,16 +61,9 @@ void loop(){
         commandReceived += String(charReceived);
       }
     }
-  }
-    
-  
-    
-    
- 
+  } 
   
 }
-
-
 
 
 void sendResponse(String response){
@@ -89,12 +74,16 @@ void sendResponse(String response){
 
 void sendResponseUsingAddress(char address, String response){
 
-  response += "\r\n";
+  //response += "\r\n";
   
   Serial.println("Sending Response: " + response);
   mySDI12.sendCommand(response);
 
 }
+
+
+
+
 
 void parseCommand(String command){
 

@@ -21,6 +21,7 @@ void loop(){
 
 
 void printBufferToScreen(){
+  Serial.println("Printing buffer");
   String buffer = "";
   mySDI12.read(); // consume address
   while(mySDI12.available()){
@@ -38,18 +39,21 @@ void printBufferToScreen(){
 }
 
 
-boolean checkActive(char i, int attempts){              
+boolean checkActive(char address, int attempts){              
 
-  Serial.println("Checking if [" + String(i) + "] is active");
+  Serial.println("Checking if [" + String(address) + "] is active");
   
-  String myCommand = "";
-  myCommand = "";
-  myCommand += (char) i;                 // sends basic 'acknowledge' command [address][!]
-  myCommand += "!";
+  String command = "" + String(address) + "!";
 
-  Serial.println("Sending command: " + myCommand);
+  Serial.println("Sending command: " + command);
 
-  mySDI12.sendCommand(myCommand);
+  mySDI12.sendCommand(command);
+
+ // delay(100);
+
+  printBufferToScreen();
+
+
     
   String response = "";
   
@@ -69,9 +73,9 @@ boolean checkActive(char i, int attempts){
         char charReceived = mySDI12.read(); 
     
         if (charReceived == '\n'){  
-  
+          response += String(charReceived);
           Serial.println("Response Received: " + response + String(charReceived));
-   
+          break;
           
         }else{
           response += String(charReceived);
