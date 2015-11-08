@@ -44,7 +44,11 @@ void setup(){
 
   delay(2000);
 
+  //registerInterupts();
+  
   mySDI12.begin(); 
+  
+  
   
   delay(500); // allow things to settle
   
@@ -55,26 +59,77 @@ void setup(){
 
 void loop(){
 
-  while(mySDI12.available()){
+  int avail = mySDI12.available();
+  
+  while(avail){
 
-    char charReceived = (char)mySDI12.read();  
-    Serial.println(charReceived);
+    if(avail < 0){
 
-    if (charReceived == '!'){  
-    
-      Serial.println(commandReceived);
-      
-      parseCommand(commandReceived);
-      
-      commandReceived = "";
-      
+      Serial.println("ERROR: We have had a buffer overflow");
     }else{
-      commandReceived += charReceived;
+
+      for(int a = 0; a < avail; a++){
+        
+      
+        char charReceived = mySDI12.read(); 
+    
+        if (charReceived == '!'){  
+          
+          //commandReceived += String(charReceived);
+          Serial.println("FULL Command: " + commandReceived);
+          
+          parseCommand(commandReceived);
+          
+          commandReceived = "";
+    
+          // Turn interupts back on
+          //interrupts();
+          
+        }else{
+          commandReceived += String(charReceived);
+        }
+      }
     }
-
+    avail = mySDI12.available();
+    
   }
-
+  
 }
+
+void registerInterupts(){
+
+  pinMode(DATAPIN, OUTPUT);
+  attachInterrupt(DATAPIN, wakeUpAndRead, RISING);
+  interrupts();
+}
+
+void deregisterInterupts(){
+  detachInterrupt(DATAPIN);
+  
+}
+
+
+
+void wakeUpAndRead(){
+
+  Serial.println("Waking up");
+  /*
+    It does so by pulling the data line into a 5v state for at least 12
+    milliseconds to wake up all the sensors, before returning the line into
+    a 0v state for 8 milliseconds announce an outgoing command. The command
+    contains both the action to be taken, and the address of the device who
+    should respond. If there is a sensor on the bus with that address, it is
+    responsible for responding to the command. Sensors should ignore
+    commands that were not issued to them, and should return to a sleep
+    state until the datalogger again issues the wakeup sequence. 
+  */
+  noInterrupts();
+  
+
+  
+  interrupts();  
+}
+
 
 
 // ------ State machine to signal to Master when transmitting etc -----
@@ -119,10 +174,10 @@ void sendResponse(String response){
 
 void sendResponseUsingAddress(char address, String response){
 
-  Serial.println("Sending response: " + currentAddress + response);
+  Serial.println("Sending response: " + String(address) + response);
   
   setState(TRANSMITTING);
-  mySDI12.sendCommand(currentAddress + response + "\r\n");
+  mySDI12.sendCommand(String(currentAddress) + response + "\r\n");
 
   // MAKE LED FLASH HERE?
  
@@ -148,14 +203,18 @@ void parseCommand(String command){
 
   Serial.println("currentAddress: " + currentAddress);
 
+  
+  
   if(command.length() == 1){
 
     // ----- This is Acknowledge Active request -----
+    Serial.println("Received a Acknowledge Active command");
     acknowdgeActive();
     
   }else{
 
     String action = command.substring(1);
+    
   
     if(action.charAt(0) == 'I'){
       // ----- This is a Send Identification action -----
@@ -176,7 +235,7 @@ void parseCommand(String command){
       
     }else if(action.charAt(0) == 'D'){
       // ----- This is Send Data action -----
-      sendData(int(action.charAt(1)));
+      sendDataTwo(int(action.charAt(1)));
       
     }else if(action.charAt(0) == 'V'){
       // ----- This is Start Verification action -----
@@ -202,7 +261,7 @@ void parseCommand(String command){
 void acknowdgeActive(){
 
     // ------ Acknowledge Active ------
-    Serial.println("acknowledgeActive");
+    Serial.println("Sending Acknowledge Active response, current address: " + String(currentAddress));
     sendResponse("");
       
 
@@ -276,13 +335,13 @@ void startMeasurementWithCRC(){
  
     
 
-void sendData(int measurementNumber){
+void sendDataTwo(int measurementNumber){
 
   // ------- Send Data ------
 
-  String data = "{'data': {'sensorType': 'atmospheric-temperature', 'value': 25.00}}";
-  Serial.println("sendData: " + data);
-  sendResponse(data);
+  String dataToSend = "{'data': {'sensorType': 'atmospheric-temperature', 'value': 25.00}}";
+  Serial.println("sendData: " + dataToSend);
+  sendResponse(dataToSend);
 
 }
  
