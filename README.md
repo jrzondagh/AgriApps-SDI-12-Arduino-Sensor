@@ -1,5 +1,5 @@
-# AgriApps SDI-12 Arduino Sensor Library
-SDI-12 sensor / slave side library for Arduino based sensors
+# Agri Apps SDI-12 Arduino Sensor Library
+SDI-12 sensor / slave side library for Arduino based sensors maintained by the team at www.agriapps.com
 
 # Stage of Project
 This project is still very much under development and in the first phase is only looking to support the following commands from the Master:
