@@ -1,4 +1,4 @@
-# AgriApps-SDI-12-Arduino-Sensor
+# AgriApps SDI-12 Arduino Sensor Library
 SDI-12 sensor / slave side library for Arduino based sensors
 
 # Stage of Project
@@ -9,6 +9,7 @@ This project is still very much under development and in the first phase is only
 * Address Query
 * Start Measurement
 * Send Data
+
 In the next phase we are looking to add:
 * CRC support
 * Start Verification
