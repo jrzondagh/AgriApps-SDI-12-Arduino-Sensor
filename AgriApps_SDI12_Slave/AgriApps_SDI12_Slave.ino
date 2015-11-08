@@ -42,7 +42,7 @@ void setup(){
 }
 
 void loop(){
-
+  
   int avail = mySDI12.available();
 
   if(avail < 0){
@@ -71,6 +71,8 @@ void loop(){
     }
   }
     
+  
+    
     
  
   
@@ -88,7 +90,8 @@ void sendResponse(String response){
 void sendResponseUsingAddress(char address, String response){
 
   response += "\r\n";
-
+  
+  Serial.println("Sending Response: " + response);
   mySDI12.sendCommand(response);
 
 }

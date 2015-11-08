@@ -1,7 +1,7 @@
 #include <SDI12.h>
 
 #define DATAPIN 4         // change to the proper pin
-SDI12 mySDI12(DATAPIN); 
+SDI12 mySDI12(DATAPIN, 0); 
 
 
 void setup(){
@@ -54,31 +54,32 @@ boolean checkActive(char i, int attempts){
   String response = "";
   
   for(int m = 0; m < 1000; m++){
-    
+
     int avail = mySDI12.available();
-    
-    //Serial.println("Number of chars available: " + String(avail));
-    
-    if(avail < 0){  
-      Serial.println("ERROR: We have had a buffer overflow, flushing.");
-      //mySDI12.flush();
-      return false;
+  
+    if(avail < 0){
       
-    }else if (avail > 0){
+      Serial.println("ERROR: We have had a buffer overflow, flushing.");
+      mySDI12.flush();
+      
+    }else if(avail > 0){
+  
       for(int a = 0; a < avail; a++){
         
         char charReceived = mySDI12.read(); 
-
-        response += String(charReceived);
+    
+        if (charReceived == '\n'){  
   
-        Serial.println(String(charReceived));      
+          Serial.println("Response Received: " + response + String(charReceived));
+   
+          
+        }else{
+          response += String(charReceived);
+        }
       }
-      //return true;
-    }else{
-  
-        //Serial.println("Nothing received");
-      
     }
+    
+    
     delayMicroseconds(1000);
   }
   Serial.println("Response: " + response);
