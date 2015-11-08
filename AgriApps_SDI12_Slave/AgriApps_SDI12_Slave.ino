@@ -20,20 +20,10 @@ String serialNumber = "101";
 
 // ------ END SETTINGS ------
 
-SDI12 mySDI12(DATAPIN); 
+SDI12 mySDI12(DATAPIN, 1); 
 
 String commandReceived = "";
-
-char sensor1 = 'a';
-char sensor2 = 'b';
-char sensor3 = 'c';
-char sensor4 = 'd';
-char sensor5 = 'e';
-char sensor6 = 'f';
-char sensor7 = 'g';
-char sensor8 = 'h';
-
-char currentAddress = 'a';
+char currentAddress = '0';
 int currentReadingDelay = 2;    // Default to 2 seconds
 
 
@@ -43,145 +33,63 @@ void setup(){
   Serial.println("SDI-12 sensor");
 
   delay(2000);
-
-  //registerInterupts();
   
   mySDI12.begin(); 
   
   
-  
   delay(500); // allow things to settle
   
-  setState(LISTENING);
-
-
 }
 
 void loop(){
 
   int avail = mySDI12.available();
-  
-  while(avail){
 
-    if(avail < 0){
+  if(avail < 0){
+    
+    Serial.println("ERROR: We have had a buffer overflow, flushing.");
+    mySDI12.flush();
+    
+  }else if(avail > 0){
 
-      Serial.println("ERROR: We have had a buffer overflow");
-    }else{
-
-      for(int a = 0; a < avail; a++){
-        
+    for(int a = 0; a < avail; a++){
       
-        char charReceived = mySDI12.read(); 
-    
-        if (charReceived == '!'){  
-          
-          //commandReceived += String(charReceived);
-          Serial.println("FULL Command: " + commandReceived);
-          
-          parseCommand(commandReceived);
-          
-          commandReceived = "";
-    
-          // Turn interupts back on
-          //interrupts();
-          
-        }else{
-          commandReceived += String(charReceived);
-        }
+      char charReceived = mySDI12.read(); 
+  
+      if (charReceived == '!'){  
+
+        Serial.println("Command Received: " + commandReceived + String(charReceived));
+
+        parseCommand(commandReceived);
+        
+        commandReceived = "";
+ 
+        
+      }else{
+        commandReceived += String(charReceived);
       }
     }
-    avail = mySDI12.available();
+  }
     
-  }
-  
-}
-
-void registerInterupts(){
-
-  pinMode(DATAPIN, OUTPUT);
-  attachInterrupt(DATAPIN, wakeUpAndRead, RISING);
-  interrupts();
-}
-
-void deregisterInterupts(){
-  detachInterrupt(DATAPIN);
-  
-}
-
-
-
-void wakeUpAndRead(){
-
-  Serial.println("Waking up");
-  /*
-    It does so by pulling the data line into a 5v state for at least 12
-    milliseconds to wake up all the sensors, before returning the line into
-    a 0v state for 8 milliseconds announce an outgoing command. The command
-    contains both the action to be taken, and the address of the device who
-    should respond. If there is a sensor on the bus with that address, it is
-    responsible for responding to the command. Sensors should ignore
-    commands that were not issued to them, and should return to a sleep
-    state until the datalogger again issues the wakeup sequence. 
-  */
-  noInterrupts();
-  
-
-  
-  interrupts();  
-}
-
-
-
-// ------ State machine to signal to Master when transmitting etc -----
-
-void setState(uint8_t state){
-  
-  if(state == HOLDING){
-    pinMode(DATAPIN,OUTPUT);
-    digitalWrite(DATAPIN,LOW);
-    *digitalPinToPCMSK(DATAPIN) &= ~(1<<digitalPinToPCMSKbit(DATAPIN));
-    return; 
-  }
-  
-  if(state == TRANSMITTING){
-    pinMode(DATAPIN,OUTPUT);
-    noInterrupts();       
-    return; 
-  }
-  
-  if(state == LISTENING) {
-    digitalWrite(DATAPIN,LOW);
-    pinMode(DATAPIN,INPUT); 
-    interrupts();       
-    *digitalPinToPCICR(DATAPIN) |= (1<<digitalPinToPCICRbit(DATAPIN));
-    *digitalPinToPCMSK(DATAPIN) |= (1<<digitalPinToPCMSKbit(DATAPIN));
     
-  }else{          
-    digitalWrite(DATAPIN,LOW); 
-    pinMode(DATAPIN,INPUT);
-    *digitalPinToPCMSK(DATAPIN) &= ~(1<<digitalPinToPCMSKbit(DATAPIN));
-    if(!*digitalPinToPCMSK(DATAPIN)){
-      *digitalPinToPCICR(DATAPIN) &= ~(1<<digitalPinToPCICRbit(DATAPIN));
-    }
-  }
+ 
+  
 }
+
+
+
 
 void sendResponse(String response){
       
-  sendResponseUsingAddress(currentAddress, response + "\r\n");
+  sendResponseUsingAddress(currentAddress, response);
 
 }
 
 void sendResponseUsingAddress(char address, String response){
 
-  Serial.println("Sending response: " + String(address) + response);
-  
-  setState(TRANSMITTING);
-  mySDI12.sendCommand(String(currentAddress) + response + "\r\n");
+  response += "\r\n";
 
-  // MAKE LED FLASH HERE?
- 
-  setState(LISTENING);
+  mySDI12.sendCommand(response);
 
 }
 
@@ -201,14 +109,12 @@ void parseCommand(String command){
 
   currentAddress = command.charAt(0);
 
-  Serial.println("currentAddress: " + currentAddress);
-
-  
+  Serial.println("Current address set to: " + currentAddress);
   
   if(command.length() == 1){
 
     // ----- This is Acknowledge Active request -----
-    Serial.println("Received a Acknowledge Active command");
+    Serial.println("Received an Acknowledge Active command");
     acknowdgeActive();
     
   }else{
@@ -262,7 +168,7 @@ void acknowdgeActive(){
 
     // ------ Acknowledge Active ------
     Serial.println("Sending Acknowledge Active response, current address: " + String(currentAddress));
-    sendResponse("");
+    sendResponse("123123");
       
 
 }
